@@ -5,30 +5,34 @@ from pywebio.output import *
 from pywebio.platform import start_server, config
 
 
-def get_scores(name, psw):
-    browser = webdriver.PhantomJS(r'phantomjs/bin/phantomjs.exe')
-    url = 'https://cas.jou.edu.cn/lyuapServer/login?service=http%3A%2F%2Fportal.jou.edu.cn%2Fc%2Fportal%2Flogin' \
-          '%3Fredirect%3D%252F-s1%26p_l_id%3D70131 '
-    browser.get(url)
-    browser.implicitly_wait(3)
-    username = browser.find_element_by_id('username')
-    username.send_keys(name)
-    password = browser.find_element_by_id('password')
-    password.send_keys(psw)
-    login_button = browser.find_element_by_name('login')
-    login_button.submit()
-    source_code = browser.page_source.encode('utf-8').decode()
-    browser.quit()
-    soup = BeautifulSoup(source_code, 'html5lib')
-    data = []
-    for i, tr in enumerate(soup.find_all('tr')):
-        if i != 0:
-            tds = tr.find_all('td')
-            if tds:
-                data.append(
-                    {'id': tds[0].contents[0], 'academic_year': tds[1].contents[0], 'semester': tds[2].contents[0],
-                     'course': tds[3].contents[0], 'score': tds[4].contents[0], 'credits': tds[5].contents[0]})
-    return data
+class Spider:
+    def __init__(self):
+        # 创建浏览器对象
+        self.browser = webdriver.PhantomJS(r'phantomjs/bin/phantomjs.exe')
+
+    def crawl_scores(self, name, psw):
+        url = 'https://cas.jou.edu.cn/lyuapServer/login?service=http%3A%2F%2Fportal.jou.edu.cn%2Fc%2Fportal%2Flogin' \
+              '%3Fredirect%3D%252F-s1%26p_l_id%3D70131 '
+        self.browser.get(url)
+        self.browser.implicitly_wait(3)
+        username = self.browser.find_element_by_id('username')
+        username.send_keys(name)
+        password = self.browser.find_element_by_id('password')
+        password.send_keys(psw)
+        login_button = self.browser.find_element_by_name('login')
+        login_button.submit()
+        source_code = self.browser.page_source.encode('utf-8').decode()
+        self.browser.quit()
+        soup = BeautifulSoup(source_code, 'html5lib')
+        data = []
+        for i, tr in enumerate(soup.find_all('tr')):
+            if i != 0:
+                tds = tr.find_all('td')
+                if tds:
+                    data.append(
+                        {'id': tds[0].contents[0], 'academic_year': tds[1].contents[0], 'semester': tds[2].contents[0],
+                         'course': tds[3].contents[0], 'score': tds[4].contents[0], 'credits': tds[5].contents[0]})
+        return data
 
 
 @config(title="JOU成绩查询")
@@ -39,7 +43,8 @@ def main():
         input('密码', type=PASSWORD, name='psw', required=True)
     ])
     with put_loading():
-        data = get_scores(info['id'], info['psw'])
+        spider = Spider()
+        data = spider.crawl_scores(info['id'], info['psw'])
         with use_scope('scores'):
             put_table(tdata=[
                 [
