@@ -3,23 +3,24 @@ from selenium import webdriver
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform import start_server, config
+from selenium.webdriver.common.by import By
 
 
 class Spider:
     def __init__(self):
         # 创建浏览器对象
-        self.browser = webdriver.PhantomJS(r'phantomjs/bin/phantomjs.exe')
+        self.browser = webdriver.Chrome()
 
     def crawl_scores(self, name, psw):
         url = 'https://cas.jou.edu.cn/lyuapServer/login?service=http%3A%2F%2Fportal.jou.edu.cn%2Fc%2Fportal%2Flogin' \
               '%3Fredirect%3D%252F-s1%26p_l_id%3D70131 '
         self.browser.get(url)
         self.browser.implicitly_wait(3)
-        username = self.browser.find_element_by_id('username')
+        username = self.browser.find_element(By.ID, 'username')
         username.send_keys(name)
-        password = self.browser.find_element_by_id('password')
+        password = self.browser.find_element(By.ID, 'password')
         password.send_keys(psw)
-        login_button = self.browser.find_element_by_name('login')
+        login_button = self.browser.find_element(By.NAME, 'login')
         login_button.submit()
         source_code = self.browser.page_source.encode('utf-8').decode()
         self.browser.quit()
